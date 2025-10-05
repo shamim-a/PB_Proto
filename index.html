@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Workshop Job Card Dashboard</title>
+    <style>
+        body {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            font-weight: 300;
+        }
+
+        .job-number {
+            background: rgba(255,255,255,0.2);
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e1e8ed;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f3f7;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .field-group {
+            margin-bottom: 16px;
+        }
+
+        .field-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .field-value {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-progress { background: #d1ecf1; color: #0c5460; }
+        .status-complete { background: #d4edda; color: #155724; }
+
+        .service-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .service-item {
+            background: #e8f5e8;
+            color: #2d5a2d;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .close:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .info-display {
+            width: 100%;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .info-display.highlight {
+            background: #e3f2fd;
+            border-color: #90caf9;
+            color: #1565c0;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+
+        .checkbox-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .checkbox-item input {
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin: 30px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .section-header:first-child {
+            margin-top: 0;
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            margin-right: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+
+        .section-header h3 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .view-all-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+
+        .view-all-card .card-icon {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .view-all-card .card-title {
+            color: white;
+        }
+
+        .view-all-card .field-label {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .view-all-card .field-value {
+            color: white;
+        }
+
+        .summary-card {
+            pointer-events: none;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .dashboard-container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            
+            .card:hover {
+                transform: none;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            }
+            
+            .modal {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 2% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>Vehicle Tracker (VT) Manage</h1>
+            <div class="job-number">Job #JC-178960</div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Single View All Button -->
+            <div class="card view-all-card" onclick="openModal('fullJobCardModal')">
+                <div class="card-header">
+                    <div class="card-icon">📄</div>
+                    <h3 class="card-title">PB-View Details</h3>
+                </div>
+                <div class="field-group">
+                    <div class="field-label">Click to view all details</div>
+                </div>
+            </div>
+
+            <!-- Quick Summary Cards -->
+            <!-- <div class="card summary-card">
+                <div class="card-header">
+                    <div class="card-icon">📋</div>
+                    <h3 class="card-title">Job Summary</h3>
+                </div>
+                <div class="field-group">
+                    <div class="field-label">Customer</div>
+                    <div class="field-value">John Smith</div>
+                </div>
+                <div class="field-group">
+                    <div class="field-label">Vehicle</div>
+                    <div class="field-value">ABC-123 | Toyota Camry 2020</div>
+                </div>
+                <div class="field-group">
+                    <div class="field-label">Status</div>
+                    <div class="field-value">
+                        <span class="status-indicator status-progress">In Progress</span>
+                    </div>
+                </div>
+            </div> -->
+
+            <!-- <div class="card summary-card">
+                <div class="card-header">
+                    <div class="card-icon">⏱️</div>
+                    <h3 class="card-title">Timeline</h3>
+                </div>
+                <div class="field-group">
+                    <div class="field-label">Received</div>
+                    <div class="field-value">Jan 15, 2024</div>
+                </div>
+                <div class="field-group">
+                    <div class="field-label">Delivery Plan</div>
+                    <div class="field-value">Jan 22, 2024</div>
+                </div>
+            </div> -->
+
+            <!-- <div class="card summary-card">
+                <div class="card-header">
+                    <div class="card-icon">👥</div>
+                    <h3 class="card-title">Staff</h3>
+                </div>
+                <div class="field-group">
+                    <div class="field-label">Painters</div>
+                    <div class="field-value">Mike Johnson, Sarah Lee</div>
+                </div>
+                <div class="field-group">
+                    <div class="field-label">Denter</div>
+                    <div class="field-value">Robert Chen</div>
+                </div>
+            </div> -->
+        </div>
+    </div>
+
+    <!-- Complete Job Card Modal -->
+    <div id="fullJobCardModal" class="modal">
+        <div class="modal-content" style="max-width: 1000px;">
+            <div class="modal-header">
+                <h2 class="modal-title">PB Details - JC-178960</h2>
+                <button class="close" onclick="closeModal('fullJobCardModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Job Details Section -->
+                <div class="section-header">
+                    <div class="section-icon">📋</div>
+                    <h3>Job Details</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">CS No</label>
+                        <div class="info-display highlight">CS-2024-001</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Received Date</label>
+                        <div class="info-display">January 15, 2024</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date Running</label>
+                        <div class="info-display">January 16, 2024</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Customer Name</label>
+                        <div class="info-display">John Smith</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vehicle Reg. No.</label>
+                        <div class="info-display highlight">ABC-123</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Brand & Model</label>
+                        <div class="info-display">Toyota Camry 2020</div>
+                    </div>
+                </div>
+
+                <!-- Timeline Section -->
+                <div class="section-header">
+                    <div class="section-icon">⏱️</div>
+                    <h3>Repair Timeline</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Dent Start Date</label>
+                        <div class="info-display">January 16, 2024 - 9:00 AM</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Dent Complete Date</label>
+                        <div class="info-display">January 18, 2024 - 5:00 PM</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Paint Booth Spray Date</label>
+                        <div class="info-display highlight">January 19, 2024 - 10:00 AM</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Customer Requested Delivery</label>
+                        <div class="info-display">January 22, 2024 - 2:00 PM</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Delivery Plan</label>
+                        <div class="info-display highlight">January 22, 2024 - 4:00 PM</div>
+                    </div>
+                </div>
+
+                <!-- Staff Section -->
+                <div class="section-header">
+                    <div class="section-icon">👥</div>
+                    <h3>Assigned Staff</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Painter(s)</label>
+                        <div class="info-display">Mike Johnson, Sarah Lee</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Denter(s)</label>
+                        <div class="info-display">Robert Chen</div>
+                    </div>
+                </div>
+
+                <!-- Work Details Section -->
+                <div class="section-header">
+                    <div class="section-icon">🔧</div>
+                    <h3>Work Details</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Portion</label>
+                        <div class="info-display">Front Bumper, Left Door</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Touch Up</label>
+                        <div class="info-display">Minor scratches</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Rim Paint</label>
+                        <div class="info-display">Not Required</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Work Status</label>
+                        <div class="info-display highlight">
+                            <span class="status-indicator status-progress">In Progress</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Difficulties</label>
+                        <div class="info-display">Color matching required</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Color Change</label>
+                        <div class="info-display">Pearl White</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Feeder</label>
+                        <div class="info-display">Main Workshop</div>
+                    </div>
+                </div>
+
+                <!-- Additional Services Section -->
+                <div class="section-header">
+                    <div class="section-icon">✨</div>
+                    <h3>Additional Services</h3>
+                </div>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <span style="color: #28a745; font-weight: bold; margin-right: 8px;">✓</span>
+                        <span>Ceramic Quoting</span>
+                    </div>
+                    <div class="checkbox-item">
+                        <span style="color: #dc3545; font-weight: bold; margin-right: 8px;">✗</span>
+                        <span style="color: #6c757d;">Mirror Shining Polish</span>
+                    </div>
+                    <div class="checkbox-item">
+                        <span style="color: #28a745; font-weight: bold; margin-right: 8px;">✓</span>
+                        <span>Interior Deep Cleaning</span>
+                    </div>
+                    <div class="checkbox-item">
+                        <span style="color: #28a745; font-weight: bold; margin-right: 8px;">✓</span>
+                        <span>Glass Polish</span>
+                    </div>
+                    <div class="checkbox-item">
+                        <span style="color: #dc3545; font-weight: bold; margin-right: 8px;">✗</span>
+                        <span style="color: #6c757d;">Glass Polish Quoting</span>
+                    </div>
+                    <div class="checkbox-item">
+                        <span style="color: #dc3545; font-weight: bold; margin-right: 8px;">✗</span>
+                        <span style="color: #6c757d;">Glass Cutting Polish</span>
+                    </div>
+                </div>
+
+                <!-- Remarks Section -->
+                <div class="section-header">
+                    <div class="section-icon">💬</div>
+                    <h3>Remarks & Notes</h3>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ED Remarks</label>
+                    <div class="info-display" style="min-height: 80px; white-space: pre-wrap;">Minor scratches on door panel, customer reported during inspection. Vehicle shows normal wear and tear for age.</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Change Remarks</label>
+                    <div class="info-display highlight" style="min-height: 80px; white-space: pre-wrap;">Customer requested exact color match with existing paint. Special attention required for seamless blend.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('fullJobCardModal');
+                if (modal.style.display === 'block') {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }
+            }
+        });
+
+        // Print functionality for reports
+        function printReport() {
+            window.print();
+        }
+
+        // Add print button functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Single Modal Job Card Report loaded successfully');
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'989cc7bf517cba50',t:'MTc1OTY2NTg1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
